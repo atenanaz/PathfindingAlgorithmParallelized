@@ -312,8 +312,7 @@ int moveCurrentPosition(struct map *map, struct point *Currentpoint, struct prio
 		Currentpoint->x=xNew;		//could avoid to compute again distances from a position
 		Currentpoint->y=yNew;
 		queue->d[0]=height*width;
-		
-		printMap(map);
+		printf("position moved at %i, %i\n", xNew, yNew);
 		
 		/*}
 		else {
@@ -331,7 +330,6 @@ int moveCurrentPosition(struct map *map, struct point *Currentpoint, struct prio
 int calculateRoute(struct map *map, struct point *Currentpoint, struct point *endpoint, struct priorityQueue *queue) {
 		while (computeDistances(map, Currentpoint, endpoint, queue)!=0) {
 			moveCurrentPosition(map, Currentpoint, queue);
-			printf("%i %i  queue index %i\n", Currentpoint->x, Currentpoint->y, queue ->pointer);
 			}
 		return 0;
 		}
@@ -415,13 +413,13 @@ int calculateRouteOneStep(struct map *map, struct point *Currentpoint, struct po
 		CurrentPosition2.x=2;
 		CurrentPosition2.y=1;
 
-
+		calculateRoute(&map, &CurrentPosition, &endPoint, &queueParallel);
 
 
 
 
 		 
-		#pragma omp parallel shared(map, CurrentPosition, CurrentPositionEnd) private(queueParallel)
+		/*#pragma omp parallel shared(map, CurrentPosition, CurrentPositionEnd) private(queueParallel)
 		{
 		queueParallel.pointer=0;
 		#pragma omp sections
@@ -435,7 +433,7 @@ int calculateRouteOneStep(struct map *map, struct point *Currentpoint, struct po
 		calculateRoute(&map, &CurrentPositionEnd, &startPoint, &queueParallel);
 		}
 		}
-		}
+		}*/
 
 
 
