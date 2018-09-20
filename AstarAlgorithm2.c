@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define height 12
-#define width 12
+#define height 16
+#define width 16
 struct map {
 	int **mapTerrain;
 	int **distanceMap;
@@ -333,6 +333,16 @@ int calculateRouteOneStep(struct map *map, struct point *Currentpoint, struct po
 			moveCurrentPosition(map, Currentpoint, queue);
 		return 0;
 		}
+
+int checkOtherInstances(struct map *map, struct point *Currentpoint, int valueToCheck) {
+		if (map->mapTerrain[Currentpoint->x+1][Currentpoint->y]!=valueToCheck && map->mapTerrain[Currentpoint->x][Currentpoint->y+1]!= valueToCheck 			&& map->mapTerrain[Currentpoint->x-1][Currentpoint->y]!=valueToCheck && map->mapTerrain[Currentpoint->x][Currentpoint->y-1]!=valueToCheck)
+		{
+		return 0;
+		}
+		else {
+		return 1;
+		}
+		}
 			
 
 	
@@ -361,10 +371,11 @@ int calculateRouteOneStep(struct map *map, struct point *Currentpoint, struct po
 
 
 		
-		startPoint.x=2;
-		startPoint.y=3;
-		endPoint.x=7;
+		startPoint.x=8;
+		startPoint.y=9;
+		endPoint.x=1;
 		endPoint.y=7;
+		int instancesNotMet = 1;
 
 		CurrentPosition.x=startPoint.x;
 		CurrentPosition.y=startPoint.y;
@@ -387,36 +398,42 @@ int calculateRouteOneStep(struct map *map, struct point *Currentpoint, struct po
 
 		
 
-		#pragma omp parallel shared(sharedMap) 
+		#pragma omp parallel shared(sharedMap, instancesNotMet) 
 		{
 		queue.pointer=0;
 		queue2.pointer=0;
         	create_map_from_file("data.txt",10, &privateMap);   // reading matrix (matrix just for test) from txt file
         	create_map_from_file("data.txt",10, &privateMap2);   // reading matrix (matrix just for test) from txt file
-		while(CurrentPosition.x != CurrentPositionEnd.x || CurrentPosition.y != CurrentPositionEnd.y) {
+		while(instancesNotMet) {
 		#pragma omp sections
 		{
 		#pragma omp section
 		{
 		printf("instance 1\n");
 		calculateRouteOneStep(&privateMap, &CurrentPosition, &endPoint, &startPoint, &queue);
+		if (checkOtherInstances(&sharedMap, &CurrentPosition, 4)) {
+		instancesNotMet = 0;
+		}
 		sharedMap.mapTerrain[CurrentPosition.x][CurrentPosition.y]=3;
-		printf("%i %i\n",CurrentPosition.x, CurrentPosition.y );
+
 		}
 		#pragma omp section
 		{
 		printf("instance 2\n");
 		calculateRouteOneStep(&privateMap2, &CurrentPositionEnd, &startPoint, &endPoint, &queue2);
-		sharedMap.mapTerrain[CurrentPositionEnd.x][CurrentPositionEnd.y]=3;
-		printf("%i %i\n",CurrentPositionEnd.x, CurrentPositionEnd.y );
+		if (checkOtherInstances(&sharedMap, &CurrentPositionEnd, 3)) {
+		instancesNotMet = 0;
+		}
+		sharedMap.mapTerrain[CurrentPositionEnd.x][CurrentPositionEnd.y]=4;
 		}
 		}
+
 		#pragma omp barrier
 		}
 		}
 		sharedMap.mapTerrain[startPoint.x][startPoint.y]=1;
 		sharedMap.mapTerrain[endPoint.x][endPoint.y]=1;
-		//printMap(&sharedMap);
+		printMap(&sharedMap);
 	
 		/*printf("\n\n");
 		printDistanceMap(&map);
